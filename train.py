@@ -9,22 +9,14 @@ import detectron2.utils.comm as comm
 from detectron2.config import get_cfg
 from detectron2.engine import HookBase
 from detectron2.structures import BoxMode
-from licenseplates.trainer import Trainer
+from detectron2.engine import DefaultTrainer
 from detectron2.engine import default_setup
 from fvcore.common.file_io import PathManager
 from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.data import build_detection_train_loader
 from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.engine import default_argument_parser, launch
-
-# Import automation libraries
 import wget
-
-
-
-
-
-
 
 
 '''
@@ -36,12 +28,239 @@ DATASET FORMAT IN data_path
     ├── test.txt
     └── train.txt
 
-
-
 '''
+# Add unzip herer
 
 
+parser = ArgumentParser()
+parser.add_argument("--data_source", default= "datasets/licenseplates", help="Where all custom data is stored or a download link")
+parser.add_argument("--batch", default=4, help="Batch size")
+parser.add_argument("--iterations", default=2000, help="Number of Iterations to run" , type = int)
+parser.add_argument("--num_gpus", default=1, help="NUmber of GPus" , type = int)
+parser.add_argument("--cfg_model", default='COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml', help="CFG model")
+parser.add_argument("--eval_period", default=50, help="Evaluation iteration number", type = int)
+parser.add_argument("--resume_training", default=False, help="Start training from last weights")
+parser.add_argument("--project", default='team_alpha_testing', help="Give project name")
 
+opt = parser.parse_args()
+current_dir = os.getcwd()
+project_dir = os.path.join(current_dir,opt.project)
+
+os.makedirs(project_dir, exist_ok = True)
+
+def download(path):
+    if os.path.isdir(path):
+        data_path = path
+        print('Input data is a directory')
+    else:
+        test_url =  path.find('https')
+        if test_url == 0:
+            print('Input is web Source')
+            wget.download(path,project_dir)
+            # Unzip downloaded data
+
+            list_sub_folder = os.listdir(project_dir)
+            for x in list_sub_folder:
+                check = x.find('.zip')
+                if check != -1:
+                    source_zip = os.path.join(project_dir,x)
+                    destination_zip = project_dir
+
+                    un_zip(source_zip,de#  Import detectron libraries
+2
+import os
+3
+import torch
+4
+import numpy as np
+5
+from detectron2 import model_zoo
+6
+import xml.etree.ElementTree as ET
+7
+from argparse import ArgumentParser
+8
+import detectron2.utils.comm as comm
+9
+from detectron2.config import get_cfg
+10
+from detectron2.engine import HookBase
+11
+from detectron2.structures import BoxMode
+12
+from licenseplates.trainer import Trainer
+13
+from detectron2.engine import default_setup
+14#  Import detectron libraries
+2
+import os
+3
+import torch
+4
+import numpy as np
+5
+from detectron2 import model_zoo
+6
+import xml.etree.ElementTree as ET
+7
+from argparse import ArgumentParser
+8
+import detectron2.utils.comm as comm
+9
+from detectron2.config import get_cfg
+10
+from detectron2.engine import HookBase
+11
+from detectron2.structures import BoxMode
+12
+from licenseplates.trainer import Trainer
+13
+from detectron2.engine import default_setup
+14
+from fvcore.common.file_io import PathManager
+15
+from detectron2.checkpoint import DetectionCheckpointer
+16
+from detectron2.data import build_detection_train_loader
+17
+from detectron2.data import DatasetCatalog, MetadataCatalog
+18
+from detectron2.engine import default_argument_parser, launch
+19
+​
+20
+# Import automation libraries
+21
+import wget
+22
+​
+23
+​
+24
+​
+25
+​
+26
+​
+27
+​
+28
+​
+29
+​
+30
+'''
+31
+DATASET FORMAT IN data_path
+32
+​
+33
+    ├── annotations
+34
+    ├── images
+35
+    ├── names.txt
+36
+    ├── test.txt
+37
+    └── train.txt
+38
+​
+39
+​
+40
+​
+41
+'''
+42
+​
+43
+​
+44
+​
+45
+​
+46
+def find_name_txt(path):
+47
+    sub_dir = os.listdir(path)
+from fvcore.common.file_io import PathManager
+15
+from detectron2.checkpoint import DetectionCheckpointer
+16
+from detectron2.data import build_detection_train_loader
+17
+from detectron2.data import DatasetCatalog, MetadataCatalog
+18
+from detectron2.engine import default_argument_parser, launch
+19
+​
+20
+# Import automation libraries
+21
+import wget
+22
+​
+23
+​
+24
+​
+25
+​
+26
+​
+27
+​
+28
+​
+29
+​
+30
+'''
+31
+DATASET FORMAT IN data_path
+32
+​
+33
+    ├── annotations
+34
+    ├── images
+35
+    ├── names.txt
+36
+    ├── test.txt
+37
+    └── train.txt
+38
+​
+39
+​
+40
+​
+41
+'''
+42
+​
+43
+​
+44
+​
+45
+​
+46
+def find_name_txt(path):
+47
+    sub_dir = os.listdir(path)stination_zip)
+        elif test_url != 0:
+            print('Download from google drive')
+            # Assign destination zip path
+            project_dir_zip = os.path.join(project_dir, 'custom_data.zip')
+            download_file_from_google_drive(opt.data_source,project_dir_zip)
+            # Unzip Downloaded data
+            un_zip(project_dir_zip,project_dir)
+
+        data_path = find_data_folder(project_dir)
+    return data_path
 
 def find_name_txt(path):
     sub_dir = os.listdir(path)
@@ -60,14 +279,12 @@ def find_name_txt(path):
 
     return(class_names)
 
+data_path = download(opt.data_source)
+CLASS_NAMES = find_name_txt(data_path)
 
-
-CLASS_NAMES = ["licenseplate",]
-
-# CLASS_NAMES = find_name_txt(data_path)
 def setup_cfg(opt,path):
 
-    print(path)
+    # print(path)
 
 
     """
@@ -115,10 +332,6 @@ def find_data_folder(source_path):
                 # print(data_folder)
     return data_folder
 
-
-
-
-
 class ValidationLoss(HookBase):
     def __init__(self, cfg):
         super().__init__()
@@ -140,8 +353,6 @@ class ValidationLoss(HookBase):
             if comm.is_main_process():
                 self.trainer.storage.put_scalars(total_val_loss=losses_reduced, 
                                                  **loss_dict_reduced)
-
-
 
 def load_voc_instances(dirname: str, split: str):
     """
@@ -180,18 +391,12 @@ def load_voc_instances(dirname: str, split: str):
         dicts.append(r)
     return dicts
 
-
-
-
 def register_licenseplates_voc(name, dirname, split):
     DatasetCatalog.register(name,
                             lambda: load_voc_instances(dirname, split))
     MetadataCatalog.get(name).set(thing_classes=CLASS_NAMES,
                                   dirname=dirname,
                                   split=split)
-
-
-
 
 def main(args):
     # Register licenseplates dataset
@@ -204,7 +409,7 @@ def main(args):
     # exit()
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
 
-    trainer = Trainer(cfg) 
+    trainer = DefaultTrainer(cfg) 
     val_loss = ValidationLoss(cfg)
     trainer.register_hooks([val_loss]) 
 
@@ -216,6 +421,7 @@ def main(args):
         trainer.resume_or_load(resume=False)
 
     return trainer.train()
+
 def download_file_from_google_drive(id, destination):
     def get_confirm_token(response):
         for key, value in response.cookies.items():
@@ -247,97 +453,9 @@ def download_file_from_google_drive(id, destination):
 
     save_response_content(response, destination) 
 
-
-
-
-
-
-'''
-DATASET FORMAT IN data_path
-
-    ├── annotations
-    ├── images
-    ├── names.txt
-    ├── test.txt
-    └── train.txt
-'''
-
-
-
-
-
-
-
-
-
+#  add unzip
 
 if __name__ == "__main__":
-    # args = default_argument_parser().parse_args()
-    # print("Command Line Args:", args)
-    # # exit()
-
-    parser = ArgumentParser()
-
-
-
-    parser.add_argument("--data_source", default= "datasets/licenseplates", help="Where all custom data is stored or a download link")
-    parser.add_argument("--batch", default=3, help="Batch size")
-    # parser.add_argument("--image_type", default= 'jpg,png,jpge' , help="Image extentions(split by comma)")
-    parser.add_argument("--iterations", default=500, help="Number of Iterations to run" , type = int)
-    parser.add_argument("--num_gpus", default=1, help="NUmber of GPus" , type = int)
-
-    parser.add_argument("--cfg_model", default='COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml', help="CFG model")
-    # parser.add_argument("--download_url", default='1RslmRUjzYLxgpPyzSs1BP3ggCXGJRgdj', help="Download link")
-    parser.add_argument("--eval_period", default=50, help="Evaluation iteration number", type = int)
-    parser.add_argument("--resume_training", default=False, help="Start training from last weights")
-    parser.add_argument("--project", default='team_alpha_testing', help="Give project name")
-
-    opt = parser.parse_args()
-
-    current_dir = os.getcwd()
-    project_dir = os.path.join(current_dir,opt.project)
-
-    os.makedirs(project_dir, exist_ok = True)
-    
-
-    if os.path.isdir(opt.data_source):
-        data_path = opt.data_source
-        print('Input data is a directory')
-    else:
-        test_url =  opt.data_source.find('https')
-        if test_url == 0:
-            print('Input is web Source')
-            wget.download(opt.data_source,project_dir)
-            # Unzip downloaded data
-
-            list_sub_folder = os.listdir(project_dir)
-            for x in list_sub_folder:
-                check = x.find('.zip')
-                if check != -1:
-                    source_zip = os.path.join(project_dir,x)
-                    destination_zip = project_dir
-
-                    un_zip(source_zip,destination_zip)
-
-
-
-        elif test_url != 0:
-            print('Download from google drive')
-            # Assign destination zip path
-            project_dir_zip = os.path.join(project_dir, 'custom_data.zip')
-            download_file_from_google_drive(opt.data_source,project_dir_zip)
-            # Unzip Downloaded data
-            un_zip(project_dir_zip,project_dir)
-
-        data_path = find_data_folder(project_dir)
-
-    # print('here')
-
-    classes = find_name_txt(data_path)
-
-    # call_classes
-    # exit()
-
 
     launch(
         main,
