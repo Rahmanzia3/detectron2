@@ -47,6 +47,21 @@ current_dir = os.getcwd()
 project_dir = os.path.join(current_dir,opt.project)
 
 os.makedirs(project_dir, exist_ok = True)
+def un_zip(source,destination):
+        file_name = source
+      
+        # opening the zip file in READ mode 
+        with ZipFile(file_name, 'r') as zip: 
+        # printing all the contents of the zip file 
+            zip.printdir() 
+          
+            # extracting all the files 
+            print('Extracting all the files now...') 
+
+            # ######## ADD DESTINATION LOCATION HERE
+            zip.extractall(destination) 
+            print('Done!')
+
 
 def download(path):
     if os.path.isdir(path):
@@ -147,20 +162,7 @@ def find_data_folder(source_path):
 
                 # print(data_folder)
     return data_folder
-def un_zip(source,destination):
-        file_name = source
-      
-        # opening the zip file in READ mode 
-        with ZipFile(file_name, 'r') as zip: 
-        # printing all the contents of the zip file 
-            zip.printdir() 
-          
-            # extracting all the files 
-            print('Extracting all the files now...') 
-
-            # ######## ADD DESTINATION LOCATION HERE
-            zip.extractall(destination) 
-            print('Done!') 
+ 
 class ValidationLoss(HookBase):
     def __init__(self, cfg):
         super().__init__()
