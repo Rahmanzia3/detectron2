@@ -147,7 +147,20 @@ def find_data_folder(source_path):
 
                 # print(data_folder)
     return data_folder
+def un_zip(source,destination):
+        file_name = source
+      
+        # opening the zip file in READ mode 
+        with ZipFile(file_name, 'r') as zip: 
+        # printing all the contents of the zip file 
+            zip.printdir() 
+          
+            # extracting all the files 
+            print('Extracting all the files now...') 
 
+            # ######## ADD DESTINATION LOCATION HERE
+            zip.extractall(destination) 
+            print('Done!') 
 class ValidationLoss(HookBase):
     def __init__(self, cfg):
         super().__init__()
